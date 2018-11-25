@@ -1,0 +1,4 @@
+#Node Related
+/node_modules
+#IDE Related
+/vscode
