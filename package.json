@@ -1,0 +1,27 @@
+{
+  "name": "node-turing-assembler",
+  "version": "1.0.0",
+  "description": "Turing assembler command line app using nodejs.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EvanCrane/node-turing-assembler.git"
+  },
+  "keywords": [
+    "node",
+    "nodejs",
+    "turing"
+  ],
+  "author": "Evan Crane",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/EvanCrane/node-turing-assembler/issues"
+  },
+  "homepage": "https://github.com/EvanCrane/node-turing-assembler#readme",
+  "dependencies": {
+    "readline-sync": "^1.4.9"
+  }
+}
