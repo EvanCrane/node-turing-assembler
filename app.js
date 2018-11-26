@@ -1,5 +1,4 @@
-
-function mainFunc () {
+function mainFunc() {
     console.log("input starting...");
     const inputs = require('./src/input.js');
     let inputFilePath = inputs.getFilePath();
