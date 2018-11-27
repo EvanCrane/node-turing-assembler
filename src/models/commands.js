@@ -2,9 +2,9 @@
 //defines classes and models for turing assembler configuration
 
 class Command {
-    constructor(name, cmd) {
-        this.name = name;
+    constructor(cmd, params) {
         this.cmd = cmd;
+        this.params = params;
     }
 }
 
