@@ -3,6 +3,6 @@
 #Linting Related
 .eslintrc.json
 #IDE Related
-/vscode
+.vscode
 #Testing Related
 #/test
