@@ -1,4 +1,8 @@
 #Node Related
 /node_modules
+#Linting Related
+.eslintrc.json
 #IDE Related
 /vscode
+#Testing Related
+#/test
