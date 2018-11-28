@@ -2,6 +2,7 @@
 
 const Configs = require('../models/config.js');
 const Command = require('../models/commands.js');
+const error = require('../models/error.js');
 const configsList = ['states', 'start', 'accept', 'reject', 'alpha', 'tape-alpha'];
 const commands = ['rwRt', 'rwLt', 'rRl', 'rLl', 'rRt', 'rLt'];
 
@@ -28,12 +29,13 @@ function parseFileLines (fileLines) {
 	var fileContent = '';
 	for (var i = 0; i < fileLines.length; i++) {
 		//remove parts of lines that contain comments with '--'
-		fileLines[i] = fileLines.replace(/[^:]--.*/g, '');
+		fileLines[i] = fileLines[i].replace(/--.*/g, '');
+		fileContent += fileLines[i];
 	}
 	//get all substrings with matching parens
 	let parenMatchesWSpace = fileContent.match(/\{[^}]*\}/gm);
 	//remove all whitespace from config sections
-	let parenMatches = parenMatchesWSpace.replace(/\s/gm, '');
+	let parenMatches = parenMatchesWSpace.map(x => x.replace(/\s/gm, ''));
 	//get all substrings with matchings commands
 	let cmdMatches = fileContent.match(/\.*?(rwRt|rwLt|rRl|rLl|rRt|rLt)[^;]*/gm);
 	let configsObj = parseConfigs(parenMatches);
@@ -45,32 +47,51 @@ function parseFileLines (fileLines) {
 }
 
 function parseConfigs (parenMatches) {
-	let configs = new Configs();
+	var configs = {};
 	for (var i = 0; i < parenMatches.length; i++) {
 		//remove matching parens
 		parenMatches[i] = parenMatches[i].replace(/\{|\}/gm, '');
-		switch (parenMatches[i]) {
-		case 'states:':
+		//this feels dirty using switch this way
+		switch (true) {
+		case /^states:/.test(parenMatches[i]):
+			if (configs.states !== undefined) {
+				throwCustomParseError('parseConfigsError', 'DUPLICATE INIT CONFIGS DETECTED');
+			}
 			var statesStr = parenMatches[i].split(configsList[0] + ':')[1];
 			configs.states = statesStr.split(',');
 			break;
-		case 'start:':
+		case /^start:/.test(parenMatches[i]):
+			if (configs.start !== undefined) {
+				throwCustomParseError('parseConfigsError', 'DUPLICATE INIT CONFIGS DETECTED');
+			}
 			var startStr = parenMatches[i].split(configsList[1] + ':')[1];
 			configs.start = startStr;
 			break;
-		case 'accept:':
+		case /^accept:/.test(parenMatches[i]):
+			if (configs.accept !== undefined) {
+				throwCustomParseError('parseConfigsError', 'DUPLICATE INIT CONFIGS DETECTED');
+			}
 			var acceptStr = parenMatches[i].split(configsList[2] + ':')[1];
 			configs.accept = acceptStr;
 			break;
-		case 'reject:':
+		case /^reject:/.test(parenMatches[i]):
+			if (configs.test !== undefined) {
+				throwCustomParseError('parseConfigsError', 'DUPLICATE INIT CONFIGS DETECTED');
+			}
 			var rejectStr = parenMatches[i].split(configsList[3] + ':')[1];
 			configs.reject = rejectStr;
 			break;
-		case 'alpha:':
+		case /^alpha:/.test(parenMatches[i]):
+			if (configs.alpha !== undefined) {
+				throwCustomParseError('parseConfigsError', 'DUPLICATE INIT CONFIGS DETECTED');
+			}
 			var alphaStr = parenMatches[i].split(configsList[4] + ':')[1];
 			configs.alpha = alphaStr.split(',');
 			break;
-		case 'tape-alpha:':
+		case /^tape-alpha:/.test(parenMatches[i]):
+			if (configs.tapeAlpha !== undefined) {
+				throwCustomParseError('parseConfigsError', 'DUPLICATE INIT CONFIGS DETECTED');
+			}
 			var tapeStr = parenMatches[i].split(configsList[5] + ':')[1];
 			configs.tapeAlpha = tapeStr.split(',');
 			break;
@@ -91,18 +112,18 @@ function verifyConfigs (configs) {
 	}
 	//verify states has no special chars
 	for (var i = 0; i < configs.states.length; i++) {
-		if (!configs.states[i].match(/[_!@#$%^&*(),.?":{}|<>]/g)) {
+		if (configs.states[i].match(/[_!@#$%^&*(),.?":{}|<>]/g)) {
 			throwCustomParseError('verifyConfigsError', 'DETECTED NON ALPHANUMERIC SYMBOL IN STATES');
 		}
 	}
 	//verify start, accept, and reject contain just one state
-	if (configs.start === undefined || configs.start === null || configs.start.length < 1 || configs.start.length > 1) {
+	if (configs.start === undefined || configs.start === null || Array.isArray(configs.start)) {
 		throwCustomParseError('verifyConfigsError', 'INIT CONFIG START HAS INCORRECT AMOUNT OF STATES');
 	}
-	if (configs.accept === undefined || configs.accept === null || configs.accept.length < 1 || configs.accept.length > 1) {
+	if (configs.accept === undefined || configs.accept === null || Array.isArray(configs.accept)) {
 		throwCustomParseError('verifyConfigsError', 'INIT CONFIG START HAS INCORRECT AMOUNT OF STATES');
 	}
-	if (configs.reject === undefined || configs.reject === null || configs.reject.length < 1 || configs.reject.length > 1) {
+	if (configs.reject === undefined || configs.reject === null || Array.isArray(configs.reject)) {
 		throwCustomParseError('verifyConfigsError', 'INIT CONFIG START HAS INCORRECT AMOUNT OF STATES');
 	}
 	//start, accept, reject must be in the set of states and reject !== accept
@@ -112,9 +133,8 @@ function verifyConfigs (configs) {
 		if (configs.alpha === null || configs.tapeAlpha === null) {
 			return true;
 		}
-		if (configs.alpha.every(val => configs.tapeAlpha.includes(val))) {
-			return true;
-		}
+		var isSubset = configs.alpha.every(val => configs.tapeAlpha.includes(val));
+		return isSubset;
 	}
 }
 
@@ -128,75 +148,76 @@ function parseCommands (cmdMatches, configsObj) {
 		if (commands.indexOf(mSections[0]) > -1) {
 			switch (mSections[0]) {
 			case commands[0]:
-				if (mSections[5] !== undefined || mSections[5] !== '') {
+				if (mSections[5] === undefined || mSections[5] === '') {
+					if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], mSections[3], mSections[4])) {
+						let command = new Command();
+						command.cmd = commands[0];
+						command.params = [mSections[1], mSections[2], mSections[3], mSections[4]];
+						cmdObjList.push(command);
+					}
+				} else {
 					throwCustomParseError('parseCommandError', 'ERROR: INVALID ARGUMENTS FOR CMD: ' + cmdMatches[i]);
-					return null;
-				}
-				if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], mSections[3], mSections[4])) {
-					let command = new Command();
-					command.cmd = commands[0];
-					command.params = [mSections[1], mSections[2], mSections[3], mSections[4]];
-					cmdObjList.push(command);
 				}
 				break;
 			case commands[1]:
-				if (mSections[5] !== undefined || mSections[5] !== '') {
+				if (mSections[5] === undefined || mSections[5] === '') {
+					if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], mSections[3], mSections[4])) {
+						let command = new Command();
+						command.cmd = commands[0];
+						command.params = [mSections[1], mSections[2], mSections[3], mSections[4]];
+						cmdObjList.push(command);
+					}
+				} else {
 					throwCustomParseError('parseCommandError', 'ERROR: INVALID ARGUMENTS FOR CMD: ' + cmdMatches[i]);
-					return null;
-				}
-				if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], mSections[3], mSections[4])) {
-					let command = new Command();
-					command.cmd = commands[0];
-					command.params = [mSections[1], mSections[2], mSections[3], mSections[4]];
-					cmdObjList.push(command);
 				}
 				break;
 			case commands[2]:
-				if (mSections[3] !== undefined || mSections[3] !== '') {
+				if (mSections[3] === undefined || mSections[3] === '') {
+					if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], null, null)) {
+						let command = new Command();
+						command.cmd = commands[0];
+						command.params = [mSections[1], mSections[2]];
+						cmdObjList.push(command);
+					}
+				} else {
 					throwCustomParseError('parseCommandError', 'ERROR: INVALID ARGUMENTS FOR CMD: ' + cmdMatches[i]);
-					return null;
-				}
-				if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], null, null)) {
-					let command = new Command();
-					command.cmd = commands[0];
-					command.params = [mSections[1], mSections[2]];
-					cmdObjList.push(command);
 				}
 				break;
 			case commands[3]:
-				if (mSections[3] !== undefined || mSections[3] !== '') {
+				if (mSections[3] === undefined || mSections[3] === '') {
+					if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], null, null)) {
+						let command = new Command();
+						command.cmd = commands[0];
+						command.params = [mSections[1], mSections[2]];
+						cmdObjList.push(command);
+					}
+				} else {
 					throwCustomParseError('parseCommandError', 'ERROR: INVALID ARGUMENTS FOR CMD: ' + cmdMatches[i]);
 					return null;
-				}
-				if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], null, null)) {
-					let command = new Command();
-					command.cmd = commands[0];
-					command.params = [mSections[1], mSections[2]];
-					cmdObjList.push(command);
 				}
 				break;
 			case commands[4]:
-				if (mSections[4] !== undefined || mSections[4] !== '') {
+				if (mSections[4] === undefined || mSections[4] === '') {
+					if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], mSections[3], null)) {
+						let command = new Command();
+						command.cmd = commands[0];
+						command.params = [mSections[1], mSections[2], mSections[3]];
+						cmdObjList.push(command);
+					}
+				} else {
 					throwCustomParseError('parseCommandError', 'ERROR: INVALID ARGUMENTS FOR CMD: ' + cmdMatches[i]);
-					return null;
-				}
-				if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], mSections[3], null)) {
-					let command = new Command();
-					command.cmd = commands[0];
-					command.params = [mSections[1], mSections[2], mSections[3]];
-					cmdObjList.push(command);
 				}
 				break;
 			case commands[5]:
-				if (mSections[4] !== undefined || mSections[4] !== '') {
+				if (mSections[4] === undefined || mSections[4] === '') {
+					if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], mSections[3], null)) {
+						let command = new Command();
+						command.cmd = commands[0];
+						command.params = [mSections[1], mSections[2], mSections[3]];
+						cmdObjList.push(command);
+					}
+				} else {
 					throwCustomParseError('parseCommandError', 'ERROR: INVALID ARGUMENTS FOR CMD: ' + cmdMatches[i]);
-					return null;
-				}
-				if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], mSections[3], null)) {
-					let command = new Command();
-					command.cmd = commands[0];
-					command.params = [mSections[1], mSections[2], mSections[3]];
-					cmdObjList.push(command);
 				}
 				break;
 			default:
@@ -205,8 +226,7 @@ function parseCommands (cmdMatches, configsObj) {
 			}
 		}
 	}
-	throwCustomParseError('parseCommandError', 'ERROR: COULD NOT PARSE COMMANDS');
-	return null;
+	return cmdObjList;
 }
 
 function verifyCommand (configsObj, cmd, stateParam1, tapeParam1, tapeParam2, stateParam2) {
@@ -220,7 +240,7 @@ function verifyCommand (configsObj, cmd, stateParam1, tapeParam1, tapeParam2, st
 					return true;
 				}
 				if (configsObj.states.indexOf(stateParam2) > -1) {
-					if (cmd === 'rwRt ' || cmd === 'rwLt ') {
+					if (cmd === 'rwRt' || cmd === 'rwLt') {
 						return true;
 					}
 				}
@@ -232,10 +252,7 @@ function verifyCommand (configsObj, cmd, stateParam1, tapeParam1, tapeParam2, st
 
 function throwCustomParseError (nameStr, messageStr) {
 	console.log('***CUSTOM ERROR THROWN***');
-	throw new Error({
-		name: nameStr,
-		message: messageStr
-	});
+	throw new error.CustomError(nameStr, messageStr);
 }
 
 module.exports.getFileObjects = getFileObjects;
