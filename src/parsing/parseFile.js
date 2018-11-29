@@ -1,7 +1,7 @@
 //parseFile.js
 
 const Configs = require('../models/config.js');
-const Command = require('../models/commands.js');
+const command = require('../models/commands.js');
 const error = require('../models/error.js');
 const configsList = ['states', 'start', 'accept', 'reject', 'alpha', 'tape-alpha'];
 const commands = ['rwRt', 'rwLt', 'rRl', 'rLl', 'rRt', 'rLt'];
@@ -139,7 +139,7 @@ function verifyConfigs (configs) {
 }
 
 function parseCommands (cmdMatches, configsObj) {
-	cmdObjList = [];
+	cmdList = [];
 	for (var i = 0; i < cmdMatches.length; i++) {
 		cmdObj = {};
 		//replace whitespace in commands with commas
@@ -150,7 +150,7 @@ function parseCommands (cmdMatches, configsObj) {
 			case commands[0]:
 				if (mSections[5] === undefined || mSections[5] === '') {
 					if (verifyCommand(configsObj, mSections[0], mSections[1], mSections[2], mSections[3], mSections[4])) {
-						let command = new Command();
+						let cmd = new command.Command(commands[0], [mSections[1], mSections[2], mSections[3], mSections[4]);
 						command.cmd = commands[0];
 						command.params = [mSections[1], mSections[2], mSections[3], mSections[4]];
 						cmdObjList.push(command);
