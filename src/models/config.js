@@ -12,4 +12,4 @@ class Configs {
 	}
 }
 
-module.exports.Configs = Configs;
+module.exports = Configs;
