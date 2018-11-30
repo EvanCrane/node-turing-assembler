@@ -16,6 +16,7 @@ module.exports = {
 };
 
 function formString (tape, current) {
-	tape.splice(current.position, 0, '[' + current.state + ']');
-	return tape.join('');
+	let tapeCopy = tape;
+	tapeCopy.splice(current.position, 0, '[' + current.state + ']');
+	return tapeCopy.join('');
 }

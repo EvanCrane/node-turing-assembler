@@ -33,11 +33,11 @@ function turingLoop (tape, current, cmds, accept, reject) {
 			//transition to state q'
 			current.state = cmds[i].stateTrans;
 			if (cmds[i].moveRight) {
-				if (++current.position < tape.length) {
+				if (current.position + 1 < tape.length) {
 					current.position++;
 				}
 			} else if (cmds[i] === false) {
-				if (--current.position >= 0) {
+				if (current.position - 1 >= 0) {
 					current.position--;
 				}
 			}
@@ -51,4 +51,4 @@ function turingLoop (tape, current, cmds, accept, reject) {
 	return result;
 }
 
-module.exports = startTuring;
+module.exports.startTuring = startTuring;
