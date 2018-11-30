@@ -3,6 +3,7 @@
 const fs = require('fs');
 const error = require('../models/error.js');
 const parseFile = require('./parseFile.js');
+const getWord = require('./parseWord.js');
 
 function parseFileInputs (inputFilePath) {
 	try {
@@ -10,12 +11,19 @@ function parseFileInputs (inputFilePath) {
 		var fileObjects = parseFile.getFileObjects(fileLines);
 		return fileObjects;
 	} catch (err) {
-		console.log('ERROR: ' + err.name + ' | ' + err.message);
+		console.log('PARSEFILE ERROR: ' + err.name + ' | ' + err.message);
 		return null;
 	}
 }
 
-function parseWord (inputWord) {
+function parseWord (inputWord, configs) {
+	try {
+		var word = getWord.getParsedWord(inputWord, configs);
+		return word;
+	} catch (err) {
+		console.log('PARSEWORD ERROR: ' + err.name + ' | ' + err.message);
+		return null;
+	}
 }
 
 function parseFilePath (inputFilePath) {

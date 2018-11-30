@@ -1,19 +1,32 @@
-function mainFunc () {
-	console.log('input starting...');
-	const inputs = require('./src/input.js');
-	let inputFilePath = inputs.getFilePath();
+const inputs = require('./src/input.js');
+const parse = require('./src/parsing/parse.js');
+var savedPath;
 
-	console.log('parsing starting...');
-	const parse = require('./src/parsing/parse.js');
-	let fileObjects = parse.parseFileInputs(inputFilePath);
-	if (fileObjects === null) {
-		console.log('Please try again');
-		mainFunc();
-	}
-	let inputWord = inputs.getWord();
-	const parseWord = require('./src/parsing/parseWord.js');
-	//let wordContent = parseWord.getParsedWord(inputWord, fileObjects[0]);
+function main () {
+	var inputFilePath = inputs.getFilePath();
+	var inputWord = inputs.getWord();
+	var [configs, commands] = getFileContent(inputFilePath);
+	var word = getWord(inputWord, configs);
 	console.log('Ended parsing process');
 }
+
+function getFileContent (inputFilePath) {
+	let fileContent = parse.parseFileInputs(inputFilePath);
+	if (fileContent === null) {
+		console.log('Please try again...');
+		fileContent = getFileContent(inputs.getFilePath());
+	}
+	return fileContent;
+}
+
+function getWord (inputWord, configs) {
+	let word = parse.parseWord(inputWord, configs);
+	if (word === null) {
+		console.log('Please enter word again...');
+		word = getWord(inputs.getWord(), configs);
+	}
+	return word;
+}
+
 console.log('START: APP STARTING');
-mainFunc();
+main();
