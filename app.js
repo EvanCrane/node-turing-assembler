@@ -1,6 +1,6 @@
 const inputs = require('./src/input.js');
 const parse = require('./src/parsing/parse.js');
-var savedPath;
+const turing = require('./src/turing.js');
 
 function main () {
 	var inputFilePath = inputs.getFilePath();
@@ -8,6 +8,10 @@ function main () {
 	var [configs, commands] = getFileContent(inputFilePath);
 	var word = getWord(inputWord, configs);
 	console.log('Ended parsing process');
+	console.log('STARTING TURING ASSEMBLER');
+	var tape = [...word];
+	turing.startTuring(tape, configs, commands);
+	console.log('TURING ASSEMBLER FINISHED');
 }
 
 function getFileContent (inputFilePath) {
