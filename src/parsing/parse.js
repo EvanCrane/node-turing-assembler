@@ -28,10 +28,18 @@ function parseWord (inputWord, configs) {
 
 function parseFilePath (inputFilePath) {
 	inputFilePath = inputFilePath.trim();
-	if (fs.existsSync(inputFilePath) && inputFilePath.slice(-3).toUpperCase() === '.TM') {
-		let fileLines = fs.readFileSync(inputFilePath).toString().match(/^.+$/gm);
-		return fileLines;
-	} else { throw new error.CustomError('parseFileError', 'Bad filepath detected or incorrect file extension'); }
+	var pathInfo = '';
+	if (inputFilePath.startsWith('~') || fs.existsSync(inputFilePath)) {
+		if (inputFilePath.slice(-3).toUpperCase() === '.TM') {
+			let fileLines = fs.readFileSync(inputFilePath).toString().match(/^.+$/gm);
+			return fileLines;
+		} else {
+			pathInfo = 'Incorrect file extension used.';
+		}
+	} else {
+		pathInfo = 'Invalid Filepath Detected. Filepath does not exist or tilde expansion was used';
+	}
+	throw new error.CustomError('parseFileError', pathInfo);
 }
 
 module.exports.parseFileInputs = parseFileInputs;

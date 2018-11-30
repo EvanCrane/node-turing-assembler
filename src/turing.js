@@ -8,6 +8,7 @@ function startTuring (tape, configs, commands) {
 		read: tape[0]
 	};
 	try {
+		output.iteration(tape, currentInit);
 		return turingLoop(tape, currentInit, commands, configs.accept, configs.reject);
 	} catch (err) {
 		console.log('TURING ERROR: ' + err.name + ' | ' + err.message);
@@ -47,8 +48,7 @@ function turingLoop (tape, current, cmds, accept, reject) {
 			break;
 		}
 	}
-	var result = turingLoop(tape, current, cmds, accept, reject);
-	return result;
+	return turingLoop(tape, current, cmds, accept, reject);
 }
 
 module.exports.startTuring = startTuring;

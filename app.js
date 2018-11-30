@@ -4,8 +4,8 @@ const turing = require('./src/turing.js');
 
 function main () {
 	var inputFilePath = inputs.getFilePath();
-	var inputWord = inputs.getWord();
 	var [configs, commands] = getFileContent(inputFilePath);
+	var inputWord = inputs.getWord();
 	var word = getWord(inputWord, configs);
 	console.log('Ended parsing process');
 	console.log('STARTING TURING ASSEMBLER');
