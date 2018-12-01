@@ -11,7 +11,6 @@ function main () {
 	console.log('STARTING TURING ASSEMBLER');
 	var tape = [...word];
 	turing.startTuring(tape, configs, commands);
-	console.log('TURING ASSEMBLER FINISHED');
 }
 
 function getFileContent (inputFilePath) {

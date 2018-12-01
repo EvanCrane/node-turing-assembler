@@ -8,15 +8,14 @@ function startTuring (tape, configs, commands) {
 		read: tape[0]
 	};
 	try {
-		output.iteration(tape, currentInit);
-		return turingLoop(tape, currentInit, commands, configs.accept, configs.reject);
+		return turingLoop(tape, currentInit, commands, configs.accept, configs.reject, 0);
 	} catch (err) {
 		console.log('TURING ERROR: ' + err.name + ' | ' + err.message);
 		return null;
 	}
 }
 
-function turingLoop (tape, current, cmds, accept, reject) {
+function turingLoop (tape, current, cmds, accept, reject, count) {
 	if (current.state === accept) {
 		output.accept(tape, current);
 		return true;
@@ -25,6 +24,7 @@ function turingLoop (tape, current, cmds, accept, reject) {
 		output.reject(tape, current);
 		return false;
 	}
+	output.iteration(tape, current);
 	//in state q where head is reading t off of the tape, write t', transition to state q' and move the head left or right
 	for (var i = 0; i < cmds.length; i++) {
 		//find command that matches current state and tape read
@@ -34,21 +34,22 @@ function turingLoop (tape, current, cmds, accept, reject) {
 			//transition to state q'
 			current.state = cmds[i].stateTrans;
 			if (cmds[i].moveRight) {
-				if (current.position + 1 < tape.length) {
-					current.position++;
-				}
-			} else if (cmds[i] === false) {
+				current.position++;
+			} else if (cmds[i].moveRight === false) {
 				if (current.position - 1 >= 0) {
 					current.position--;
 				}
 			}
 			//move head
+			if (current.position === tape.length) {
+				tape.push('_');
+			}
 			current.read = tape[current.position];
-			output.iteration(tape, current);
 			break;
 		}
 	}
-	return turingLoop(tape, current, cmds, accept, reject);
+	count++;
+	setTimeout(turingLoop, 0, tape, current, cmds, accept, reject, count);
 }
 
 module.exports.startTuring = startTuring;
