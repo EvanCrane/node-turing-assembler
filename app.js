@@ -7,8 +7,6 @@ function main () {
 	var [configs, commands] = getFileContent(inputFilePath);
 	var inputWord = inputs.getWord();
 	var word = getWord(inputWord, configs);
-	console.log('Ended parsing process');
-	console.log('STARTING TURING ASSEMBLER');
 	var tape = [...word];
 	turing.startTuring(tape, configs, commands);
 }
