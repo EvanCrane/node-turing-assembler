@@ -25,6 +25,7 @@ function turingLoop (tape, current, cmds, accept, reject, count) {
 		return false;
 	}
 	output.iteration(tape, current);
+	var commandFound = false;
 	//in state q where head is reading t off of the tape, write t', transition to state q' and move the head left or right
 	for (var i = 0; i < cmds.length; i++) {
 		//find command that matches current state and tape read
@@ -45,11 +46,15 @@ function turingLoop (tape, current, cmds, accept, reject, count) {
 				tape.push('_');
 			}
 			current.read = tape[current.position];
+			commandFound = true;
 			break;
 		}
 	}
+	if (!commandFound) {
+		current.state = reject;
+	}
 	count++;
-	setTimeout(turingLoop, 0, tape, current, cmds, accept, reject, count);
+	setTimeout(turingLoop, 500, tape, current, cmds, accept, reject, count);
 }
 
 module.exports.startTuring = startTuring;
