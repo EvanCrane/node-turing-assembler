@@ -100,7 +100,7 @@ function parseConfigs (parenMatches) {
 	if (verifyConfigs(configs)) {
 		return configs;
 	}
-	return null;
+	throwCustomParseError('parseConfigsError', 'INVALID INITIALIZATION CONFIGURATIONS DETECTED');
 }
 
 function verifyConfigs (configs) {
