@@ -2,6 +2,12 @@
 const output = require('../src/output');
 
 function startTuring (tape, configs, commands) {
+	if (commands === null) {
+		//no commands found
+		console.log('No commands found in the .TM file. Nothing to do...');
+		console.log(tape.join(''));
+		return true;
+	}
 	var currentInit = {
 		state: configs.start,
 		position: 0,
